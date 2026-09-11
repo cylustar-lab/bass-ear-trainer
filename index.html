@@ -155,7 +155,7 @@ td.num,th.num{text-align:right}
         <div class="note-card hidden-note" id="noteCard">♪</div>
         <div class="qtext">
           <div class="status" id="status">按「開始」或空白鍵出第一題</div>
-          <div class="hint" id="hint">聽音彈奏模式：播完音之後開始計時，彈對自動下一題</div>
+          <div class="hint" id="hint">聽音彈奏模式：播完音之後開始計時，彈對（或點對指板位置）自動下一題</div>
         </div>
       </div>
       <div class="controls">
@@ -453,11 +453,11 @@ function nextQuestion(){
   if(mode==="read"){
     card.textContent=pretty(nameOf(q.midi));
     if(!$("optOctaveLoose").checked){const s=document.createElement("small");s.textContent=STRING_LABEL[q.string]+"弦";card.appendChild(s)}
-    setStatus("在琴上彈出這個音","麥克風聽到正確的音就算過；按 A 看所有位置");
+    setStatus("在琴上彈出這個音","麥克風聽到正確的音就算過，或直接點指板上的位置作答；按 A 看所有位置");
     startListening();
   } else {
     card.classList.add("hidden-note"); card.textContent="♪";
-    setStatus(mode==="ear"?"聽好，彈出來":"聽好，選音名","示範音播完後開始計時");
+    setStatus(mode==="ear"?"聽好，彈出來":"聽好，選音名",mode==="ear"?"示範音播完後開始計時；沒接麥克風可直接點指板上的位置作答":"示範音播完後開始計時");
     const dur=playNote(q.midi);
     if($("optHumMask").checked) flashMask(dur);
     setTimeout(()=>{ if(q&&!q.answered) startListening(); }, dur*1000*0.75);
@@ -480,6 +480,7 @@ function reveal(){
   const card=$("noteCard"); card.classList.remove("hidden-note"); card.innerHTML=pretty(nameOf(q.midi));
   const s=document.createElement("small"); s.textContent=STRING_LABEL[q.string]+"弦 "+q.fret+"品"; card.appendChild(s);
   drawBoard(allPositionsOf(q.midi,$("optOctaveLoose").checked));
+  drawTapped();
   speak(nameOf(q.midi));
 }
 function answer(ok,timedOut){
@@ -527,10 +528,29 @@ function drawBoard(marks){
   for(let s=0;s<4;s++){ const y=stringY(s); h+=`<line class="string" x1="${FB.x0}" y1="${y}" x2="${FB.x1}" y2="${y}" stroke-width="${4-s*0.6}"/>`; h+=`<text x="${FB.x0-14}" y="${y+4}" text-anchor="end" font-weight="600">${STRING_LABEL[s]}</text>`; }
   if(marks) for(const m of marks){ const x=m.fret===0?FB.x0-2:(fretX(m.fret-1,maxF)+fretX(m.fret,maxF))/2; const y=stringY(m.string); h+=`<circle class="pos${m.exact?" exact":""}" cx="${x}" cy="${y}" r="11"/><text class="postext${m.exact?" exact":""}" x="${x}" y="${y+4}" text-anchor="middle">${pretty(nameOf(m.midi))}</text>`; }
   h+='<g id="liveMark"></g>';
+  // invisible click targets: one per string × fret, so the fretboard itself can be used to answer
+  h+='<g id="hits">';
+  for(let s=0;s<4;s++) for(let f=0;f<=maxF;f++){ const x0=f===0?FB.x0-14:fretX(f-1,maxF), x1=f===0?FB.x0+10:fretX(f,maxF); const y=stringY(s); h+=`<rect class="hit" data-s="${s}" data-f="${f}" x="${x0}" y="${y-16}" width="${x1-x0}" height="32" fill="transparent" style="cursor:pointer"/>`; }
+  h+='</g>';
   svg.innerHTML=h;
+}
+$("fretboard").addEventListener("click",e=>{
+  const t=e.target.closest(".hit"); if(!t||!q||q.answered||mode==="name") return;
+  const s=+t.dataset.s, f=+t.dataset.f, m=OPEN[s]+f;
+  if(!q.listening){ q.listening=true; q.t0=performance.now(); }
+  const loose=$("optOctaveLoose").checked;
+  const ok=loose? pc(m)===pc(q.midi) : m===q.midi;
+  if(!ok) q.tapped={s,f,m};
+  answer(ok);
+});
+function drawTapped(){
+  if(!q||!q.tapped) return; const {s,f,m}=q.tapped;
+  const maxF=Math.max(12,+$("fretMax").value); const x=f===0?FB.x0-2:(fretX(f-1,maxF)+fretX(f,maxF))/2;
+  const g=$("liveMark"); if(g) g.innerHTML=`<circle cx="${x}" cy="${stringY(s)}" r="13" fill="var(--bad)" opacity=".85"/><text x="${x}" y="${stringY(s)+4}" text-anchor="middle" style="fill:#fff;font-weight:600">${pretty(nameOf(m))}</text>`;
 }
 function drawLive(m){
   const g=$("liveMark"); if(!g) return;
+  if(q&&q.answered&&q.tapped) return;
   if(m==null){g.innerHTML="";return}
   const maxF=Math.max(12,+$("fretMax").value);
   let h="";
@@ -587,7 +607,7 @@ document.querySelectorAll(".modes button").forEach(b=>b.onclick=()=>{
   clearTimers(); q=null; $("noteCard").className="note-card hidden-note"; $("noteCard").textContent="♪";
   $("btnNext").innerHTML='開始<kbd>Space</kbd>'; $("btnReplay").disabled=true; $("btnReveal").disabled=true; $("manualRow").hidden=true;
   $("meter").hidden=(mode==="name"); renderChoices(); drawBoard();
-  const hints={ear:"聽音彈奏模式：播完音之後開始計時，彈對自動下一題",read:"看音名彈奏模式：顯示音名，麥克風聽到正確的音就過關",name:"聽音辨名模式：播完音之後點選音名，不需要麥克風"};
+  const hints={ear:"聽音彈奏模式：播完音之後開始計時，彈對（或點對指板位置）自動下一題",read:"看音名彈奏模式：顯示音名，麥克風聽到正確的音就過關，也可以點指板作答",name:"聽音辨名模式：播完音之後點選音名，不需要麥克風"};
   setStatus("按「開始」或空白鍵出第一題",hints[mode]);
 });
 
