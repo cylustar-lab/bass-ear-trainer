@@ -72,7 +72,7 @@ header p{margin:0;color:var(--muted);font-size:13px}
 .cents::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--muted);transform:translateX(-50%)}
 .cents i{position:absolute;top:0;bottom:0;width:8px;border-radius:4px;background:var(--accent);left:50%;transform:translateX(-50%);transition:left .08s}
 .cents.off i{background:var(--bad)}
-.meter .mic-off{grid-column:1/-1;color:var(--muted);font-size:13px}
+.meter .mic-off{grid-column:1/-1;color:var(--muted);font-size:13px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .timer{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
 .timer i{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left;transition:transform .1s linear}
 
@@ -170,7 +170,7 @@ td.num,th.num{text-align:right}
     <div class="meter" id="meter">
       <div class="detected mono" id="detected">—<em id="detFreq"></em></div>
       <div class="cents" id="cents"><i></i></div>
-      <div class="mic-off" id="micMsg">麥克風尚未開啟——按「開啟麥克風」，或在設定裡改成手動判定。</div>
+      <div class="mic-off" id="micMsg"><button class="btn primary" id="btnMicInline" type="button">開啟麥克風</button> <span id="micMsgText">按一下，瀏覽器會詢問麥克風權限，選「允許」即可。不想用麥克風的話，設定裡可改成手動判定。</span></div>
     </div>
     <div class="controls" id="manualRow" hidden>
       <span class="label" style="align-self:center">手動判定</span>
@@ -359,7 +359,7 @@ async function startMic(){
   try{
     mic.stream=await navigator.mediaDevices.getUserMedia(constraints);
   }catch(e){
-    $("micMsg").hidden=false; $("micMsg").textContent="無法開啟麥克風："+(e.message||e.name)+"。請確認瀏覽器已允許麥克風，或改用手動判定。";
+    $("micMsg").hidden=false; $("micMsgText").textContent="無法開啟麥克風："+(e.message||e.name)+"。請確認瀏覽器已允許麥克風（網址列左邊的鎖頭圖示），或改用手動判定。";
     return;
   }
   const src=ac.createMediaStreamSource(mic.stream);
@@ -377,6 +377,7 @@ function stopMic(){
   mic.running=false;
   if(mic.stream){mic.stream.getTracks().forEach(t=>t.stop());mic.stream=null}
   $("btnMic").textContent="開啟麥克風";
+  $("micMsg").hidden=false;
   if(listenRaf) cancelAnimationFrame(listenRaf);
   setDetected(null);
 }
@@ -596,6 +597,7 @@ $("btnReveal").onclick=()=>{ if(q&&!q.answered){ reveal(); setStatus("答案揭�
 $("btnManualGood").onclick=()=>answer(true);
 $("btnManualBad").onclick=()=>answer(false);
 $("btnMic").onclick=()=>{ mic.running?stopMic():startMic(); };
+$("btnMicInline").onclick=()=>startMic();
 $("btnReset").onclick=()=>{ stats={notes:{},total:0,correct:0}; saveStats(); renderStats(); };
 document.addEventListener("keydown",e=>{
   if(e.target.matches("input,select,textarea")) return;
