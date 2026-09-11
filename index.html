@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bass 聽音指板練習</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F3F0E8; --surface:#FFFFFF; --surface2:#EBE7DD; --line:#D8D2C4;
+  --text:#1C1D21; --muted:#6E6A60; --accent:#B8842A; --accent-ink:#1C1D21;
+  --good:#2E8B57; --bad:#C6503E; --warn:#C08A1E; --string:#8C7B5C; --fret:#BDB6A6;
+  --shadow:0 1px 2px rgba(20,18,10,.08),0 8px 24px rgba(20,18,10,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14161A; --surface:#1E2127; --surface2:#262A31; --line:#33383F;
+    --text:#E8E4DA; --muted:#8E929B; --accent:#D9A441; --accent-ink:#14161A;
+    --good:#5FB878; --bad:#E0654F; --warn:#D9A441; --string:#B39A6A; --fret:#3E434B;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14161A; --surface:#1E2127; --surface2:#262A31; --line:#33383F;
+  --text:#E8E4DA; --muted:#8E929B; --accent:#D9A441; --accent-ink:#14161A;
+  --good:#5FB878; --bad:#E0654F; --warn:#D9A441; --string:#B39A6A; --fret:#3E434B;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans","PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;font-size:15px;line-height:1.5;padding-block:20px 48px;padding-inline:16px}
+.wrap{max-width:920px;margin:0 auto;display:grid;gap:18px}
+h1{font-family:"Bricolage Grotesque","PingFang TC","Microsoft JhengHei",sans-serif;font-weight:700;font-size:clamp(22px,3.6vw,30px);margin:0;letter-spacing:-.01em;text-wrap:balance}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header p{margin:0;color:var(--muted);font-size:13px}
+.label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+
+/* mode tabs */
+.modes{display:flex;gap:6px;flex-wrap:wrap}
+.modes button{flex:1 1 150px;background:var(--surface2);border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:8px;cursor:pointer;font:inherit;text-align:left}
+.modes button strong{display:block;font-size:14px}
+.modes button span{display:block;font-size:12px;color:var(--muted)}
+.modes button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.modes button[aria-pressed="true"] span{color:var(--accent-ink);opacity:.8}
+.modes button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* stage */
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:20px;display:grid;gap:16px}
+.stage-top{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}
+@media (max-width:560px){.stage-top{grid-template-columns:1fr}}
+.question{display:flex;align-items:center;gap:18px;min-height:96px}
+.note-card{width:112px;height:96px;border-radius:12px;background:var(--surface2);border:1px solid var(--line);display:grid;place-items:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:44px;line-height:1;position:relative;flex:none;transition:background .2s,border-color .2s}
+.note-card small{position:absolute;right:8px;bottom:6px;font:500 11px "IBM Plex Mono",monospace;color:var(--muted)}
+.note-card.hidden-note{font-size:34px;color:var(--muted)}
+.note-card.good{background:color-mix(in srgb,var(--good) 18%,var(--surface2));border-color:var(--good)}
+.note-card.bad{background:color-mix(in srgb,var(--bad) 18%,var(--surface2));border-color:var(--bad)}
+.qtext{display:grid;gap:4px}
+.qtext .status{font-size:17px;font-weight:600}
+.qtext .hint{color:var(--muted);font-size:13px}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+.btn{background:var(--surface2);border:1px solid var(--line);color:var(--text);padding:9px 14px;border-radius:8px;cursor:pointer;font:inherit;font-weight:500}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn kbd{font:500 11px "IBM Plex Mono",monospace;opacity:.7;margin-left:6px}
+
+/* meter */
+.meter{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;padding:10px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--line)}
+.meter .detected{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:28px;min-width:64px;line-height:1}
+.meter .detected em{font:500 12px "IBM Plex Mono",monospace;color:var(--muted);font-style:normal;margin-left:4px}
+.cents{position:relative;height:10px;background:var(--line);border-radius:5px;overflow:hidden}
+.cents::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--muted);transform:translateX(-50%)}
+.cents i{position:absolute;top:0;bottom:0;width:8px;border-radius:4px;background:var(--accent);left:50%;transform:translateX(-50%);transition:left .08s}
+.cents.off i{background:var(--bad)}
+.meter .mic-off{grid-column:1/-1;color:var(--muted);font-size:13px}
+.timer{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.timer i{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left;transition:transform .1s linear}
+
+/* name choices */
+.choices{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+@media (max-width:560px){.choices{grid-template-columns:repeat(4,1fr)}}
+.choices button{background:var(--surface2);border:1px solid var(--line);color:var(--text);padding:10px 0;border-radius:8px;cursor:pointer;font:600 16px "IBM Plex Mono",monospace}
+.choices button.good{background:var(--good);border-color:var(--good);color:#fff}
+.choices button.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+
+/* fretboard */
+.board{overflow-x:auto}
+svg.fb{width:100%;min-width:560px;height:auto;display:block}
+.fb text{font-family:"IBM Plex Mono",monospace;fill:var(--muted);font-size:11px}
+.fb .string{stroke:var(--string);stroke-linecap:round}
+.fb .fret{stroke:var(--fret);stroke-width:2}
+.fb .nut{stroke:var(--text);stroke-width:5}
+.fb .dot{fill:var(--line)}
+.fb .pos{fill:var(--surface);stroke:var(--accent);stroke-width:2}
+.fb .pos.exact{fill:var(--accent)}
+.fb .pos text,.fb .postext{font-size:11px;font-weight:600;fill:var(--text)}
+.fb .postext.exact{fill:var(--accent-ink)}
+.fb .live{fill:none;stroke:var(--good);stroke-width:3}
+
+/* settings */
+details.settings{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:0}
+details.settings summary{cursor:pointer;padding:14px 20px;font-weight:600;list-style:none;display:flex;justify-content:space-between}
+details.settings summary::-webkit-details-marker{display:none}
+details.settings summary::after{content:"＋";color:var(--muted)}
+details[open].settings summary::after{content:"－"}
+.settings-body{padding:4px 20px 20px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.field{display:grid;gap:6px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface2);cursor:pointer;font-size:13px;user-select:none}
+.chip input{margin:0;accent-color:var(--accent)}
+.chip.on{border-color:var(--accent)}
+input[type=number],select{font:inherit;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--surface2);color:var(--text);width:80px}
+select{width:auto}
+input[type=range]{accent-color:var(--accent);width:100%}
+.switch{display:flex;align-items:center;gap:8px;font-size:14px}
+.switch input{accent-color:var(--accent);width:18px;height:18px;margin:0}
+
+/* stats */
+.stats{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px;display:grid;gap:12px}
+.stats-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.tile{padding:10px 12px;background:var(--surface2);border-radius:10px}
+.tile b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-size:24px;font-weight:700;line-height:1.1}
+.tile span{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+td.num,th.num{text-align:right}
+.bar{height:6px;border-radius:3px;background:var(--line);position:relative;min-width:80px}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--good)}
+.bar i.low{background:var(--bad)}
+.bar i.mid{background:var(--warn)}
+.foot{color:var(--muted);font-size:12px}
+.linkbtn{background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit;font-size:12px;padding:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Bass 聽音指板練習</h1>
+    <p>4 弦標準調音 E–A–D–G · 聽到音 → 在琴上彈出來 → 麥克風判斷</p>
+  </header>
+
+  <nav class="modes" aria-label="練習模式">
+    <button id="mode-ear" data-mode="ear" aria-pressed="true"><strong>聽音彈奏</strong><span>只播音、不給音名，彈對才過</span></button>
+    <button id="mode-read" data-mode="read" aria-pressed="false"><strong>看音名彈奏</strong><span>顯示音名，麥克風驗證位置</span></button>
+    <button id="mode-name" data-mode="name" aria-pressed="false"><strong>聽音辨名</strong><span>播音後點選音名，不需麥克風</span></button>
+  </nav>
+
+  <section class="stage" aria-live="polite">
+    <div class="stage-top">
+      <div class="question">
+        <div class="note-card hidden-note" id="noteCard">♪</div>
+        <div class="qtext">
+          <div class="status" id="status">按「開始」或空白鍵出第一題</div>
+          <div class="hint" id="hint">聽音彈奏模式：播完音之後開始計時，彈對自動下一題</div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btnNext">開始<kbd>Space</kbd></button>
+        <button class="btn" id="btnReplay" disabled>重播<kbd>R</kbd></button>
+        <button class="btn" id="btnReveal" disabled>看答案<kbd>A</kbd></button>
+      </div>
+    </div>
+
+    <div class="timer" id="timer"><i></i></div>
+
+    <div class="meter" id="meter">
+      <div class="detected mono" id="detected">—<em id="detFreq"></em></div>
+      <div class="cents" id="cents"><i></i></div>
+      <div class="mic-off" id="micMsg">麥克風尚未開啟——按「開啟麥克風」，或在設定裡改成手動判定。</div>
+    </div>
+    <div class="controls" id="manualRow" hidden>
+      <span class="label" style="align-self:center">手動判定</span>
+      <button class="btn" id="btnManualGood">彈對了</button>
+      <button class="btn" id="btnManualBad">彈錯了</button>
+    </div>
+
+    <div class="choices" id="choices" hidden></div>
+
+    <div class="board">
+      <svg class="fb" id="fretboard" viewBox="0 0 900 190" role="img" aria-label="指板"></svg>
+    </div>
+  </section>
+
+  <details class="settings" id="settings">
+    <summary>設定</summary>
+    <div class="settings-body">
+      <div class="field">
+        <span class="label">麥克風</span>
+        <div class="row">
+          <button class="btn" id="btnMic">開啟麥克風</button>
+          <select id="micDevice" aria-label="輸入裝置"><option value="">預設輸入</option></select>
+        </div>
+        <label class="switch"><input type="checkbox" id="optManual"> 不用麥克風，手動判定</label>
+      </div>
+      <div class="field">
+        <span class="label">練習的弦</span>
+        <div class="row" id="strings">
+          <label class="chip on"><input type="checkbox" value="3" checked> G (1弦)</label>
+          <label class="chip on"><input type="checkbox" value="2" checked> D (2弦)</label>
+          <label class="chip on"><input type="checkbox" value="1" checked> A (3弦)</label>
+          <label class="chip on"><input type="checkbox" value="0" checked> E (4弦)</label>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">品格範圍</span>
+        <div class="row">
+          <input type="number" id="fretMin" min="0" max="20" value="0" aria-label="最低品"> 到
+          <input type="number" id="fretMax" min="0" max="20" value="12" aria-label="最高品"> 品
+        </div>
+        <label class="switch"><input type="checkbox" id="optSharps" checked> 包含升降音</label>
+        <label class="switch"><input type="checkbox" id="optOctaveLoose" checked> 任何八度都算對（關掉＝必須彈同一個音高）</label>
+        <label class="switch"><input type="checkbox" id="optFlats"> 用降記號顯示（B♭ 而非 A♯）</label>
+      </div>
+      <div class="field">
+        <span class="label">限定音名（例如只練一首歌用到的音）</span>
+        <div class="row" id="notePool"></div>
+        <div class="row"><button class="linkbtn" id="poolAll">全選</button><button class="linkbtn" id="poolNone">全不選</button><button class="linkbtn" id="poolEmaj">E 大調 (光輝歲月)</button></div>
+      </div>
+      <div class="field">
+        <span class="label">節奏</span>
+        <label>答題時限 <b class="mono" id="limitVal">8</b> 秒<input type="range" id="optLimit" min="2" max="20" value="8"></label>
+        <label>答對後 <b class="mono" id="gapVal">1.0</b> 秒出下一題<input type="range" id="optGap" min="0.3" max="4" step="0.1" value="1"></label>
+        <label class="switch"><input type="checkbox" id="optAuto" checked> 自動出下一題</label>
+        <label class="switch"><input type="checkbox" id="optSpeak"> 揭曉時用語音唸出音名</label>
+      </div>
+      <div class="field">
+        <span class="label">示範音色</span>
+        <label>音量 <input type="range" id="optVol" min="0" max="1" step="0.05" value="0.6"></label>
+        <label class="switch"><input type="checkbox" id="optHumMask"> 播音時同時顯示詞干擾（隨機音名閃過，逼自己靠耳朵）</label>
+      </div>
+    </div>
+  </details>
+
+  <section class="stats">
+    <div class="stats-head">
+      <div><span class="label">這台裝置的累計紀錄</span></div>
+      <button class="linkbtn" id="btnReset">清除紀錄</button>
+    </div>
+    <div class="tiles">
+      <div class="tile"><b id="stTotal">0</b><span>題數</span></div>
+      <div class="tile"><b id="stAcc">—</b><span>正確率</span></div>
+      <div class="tile"><b id="stAvg">—</b><span>平均反應（秒）</span></div>
+      <div class="tile"><b id="stWorst">—</b><span>最慢的音</span></div>
+    </div>
+    <div style="overflow-x:auto">
+      <table id="statTable">
+        <thead><tr><th>音名</th><th class="num">題數</th><th class="num">正確</th><th>正確率</th><th class="num">平均秒數</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="foot">反應時間從示範音播完開始算；表格按「平均秒數」排序，排在上面的就是該多練的音。紀錄只存在這個瀏覽器裡。</p>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+const SHARP=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const FLAT =["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+const OPEN=[28,33,38,43]; // E1 A1 D2 G2 (MIDI), index 0 = 4th string E
+const STRING_LABEL=["E","A","D","G"];
+const NATURAL=new Set([0,2,4,5,7,9,11]);
+const $=id=>document.getElementById(id);
+
+/* ---------- state ---------- */
+let mode="ear";
+let audio=null, master=null;
+let mic={stream:null,analyser:null,buf:null,running:false,hp:null};
+let q=null; // {midi,string,fret,revealed,answered,t0,timeoutId,stable,frames}
+let gapTimer=null, listenRaf=null, timerRaf=null;
+let stats=loadStats();
+
+/* ---------- helpers ---------- */
+function useFlats(){return $("optFlats").checked}
+function pc(m){return ((m%12)+12)%12}
+function nameOf(m){return (useFlats()?FLAT:SHARP)[pc(m)]}
+function pretty(n){return n.replace("#","♯").replace("b","♭")}
+function octave(m){return Math.floor(m/12)-1}
+function freqOf(m){return 440*Math.pow(2,(m-69)/12)}
+function midiOf(f){return 69+12*Math.log2(f/440)}
+
+function pool(){ // allowed pitch classes
+  return [...document.querySelectorAll("#notePool input")].filter(c=>c.checked).map(c=>+c.value);
+}
+function positions(){
+  const strs=[...document.querySelectorAll("#strings input")].filter(c=>c.checked).map(c=>+c.value);
+  let lo=+$("fretMin").value, hi=+$("fretMax").value; if(lo>hi)[lo,hi]=[hi,lo];
+  const allowed=new Set(pool()); const sharps=$("optSharps").checked;
+  const out=[];
+  for(const s of strs) for(let f=lo;f<=hi;f++){
+    const m=OPEN[s]+f, p=pc(m);
+    if(!allowed.has(p)) continue;
+    if(!sharps && !NATURAL.has(p)) continue;
+    out.push({string:s,fret:f,midi:m});
+  }
+  return out;
+}
+function allPositionsOf(midi,loose){
+  const out=[]; const hi=+$("fretMax").value;
+  for(let s=0;s<4;s++) for(let f=0;f<=Math.max(hi,12);f++){
+    const m=OPEN[s]+f;
+    if(loose? pc(m)===pc(midi) : m===midi) out.push({string:s,fret:f,midi:m,exact:m===midi});
+  }
+  return out;
+}
+
+/* ---------- synth: plucked bass ---------- */
+function ensureAudio(){
+  if(audio) return audio;
+  audio=new (window.AudioContext||window.webkitAudioContext)();
+  master=audio.createGain(); master.gain.value=+$("optVol").value; master.connect(audio.destination);
+  return audio;
+}
+function playNote(midi,dur=1.6){
+  const ac=ensureAudio(); if(ac.state==="suspended") ac.resume();
+  const f=freqOf(midi), t=ac.currentTime;
+  const o1=ac.createOscillator(); o1.type="sawtooth"; o1.frequency.value=f;
+  const o2=ac.createOscillator(); o2.type="triangle"; o2.frequency.value=f;
+  const o3=ac.createOscillator(); o3.type="sine"; o3.frequency.value=f*2; // touch of 2nd harmonic
+  const lp=ac.createBiquadFilter(); lp.type="lowpass"; lp.Q.value=1.2;
+  lp.frequency.setValueAtTime(Math.min(f*9,3800),t); lp.frequency.exponentialRampToValueAtTime(Math.max(f*1.8,120),t+dur);
+  const g=ac.createGain(); g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(0.9,t+0.006); g.gain.exponentialRampToValueAtTime(0.35,t+0.25); g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  const g1=ac.createGain(); g1.gain.value=0.35; const g2=ac.createGain(); g2.gain.value=0.6; const g3=ac.createGain(); g3.gain.value=0.12;
+  o1.connect(g1).connect(lp); o2.connect(g2).connect(lp); o3.connect(g3).connect(lp); lp.connect(g).connect(master);
+  [o1,o2,o3].forEach(o=>{o.start(t);o.stop(t+dur+0.05)});
+  return dur;
+}
+function ding(ok){
+  const ac=ensureAudio(); const t=ac.currentTime;
+  const o=ac.createOscillator(); o.type="sine"; o.frequency.value=ok?880:220;
+  const g=ac.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.25,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+(ok?0.25:0.4));
+  o.connect(g).connect(master); o.start(t); o.stop(t+0.5);
+}
+function speak(text){
+  if(!$("optSpeak").checked || !("speechSynthesis" in window)) return;
+  const u=new SpeechSynthesisUtterance(text.replace("#"," sharp").replace("b"," flat")); u.lang="en-US"; u.rate=0.9;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+
+/* ---------- mic + pitch detection (autocorrelation) ---------- */
+async function listDevices(){
+  try{
+    const devs=await navigator.mediaDevices.enumerateDevices();
+    const sel=$("micDevice"); const cur=sel.value; sel.innerHTML='<option value="">預設輸入</option>';
+    devs.filter(d=>d.kind==="audioinput").forEach(d=>{const o=document.createElement("option");o.value=d.deviceId;o.textContent=d.label||("輸入裝置 "+sel.length);sel.appendChild(o)});
+    sel.value=cur;
+  }catch(e){}
+}
+async function startMic(){
+  const ac=ensureAudio(); if(ac.state==="suspended") await ac.resume();
+  stopMic();
+  const id=$("micDevice").value;
+  const constraints={audio:{deviceId:id?{exact:id}:undefined,echoCancellation:false,noiseSuppression:false,autoGainControl:false}};
+  try{
+    mic.stream=await navigator.mediaDevices.getUserMedia(constraints);
+  }catch(e){
+    $("micMsg").hidden=false; $("micMsg").textContent="無法開啟麥克風："+(e.message||e.name)+"。請確認瀏覽器已允許麥克風，或改用手動判定。";
+    return;
+  }
+  const src=ac.createMediaStreamSource(mic.stream);
+  mic.hp=ac.createBiquadFilter(); mic.hp.type="highpass"; mic.hp.frequency.value=30;
+  mic.analyser=ac.createAnalyser(); mic.analyser.fftSize=8192; mic.analyser.smoothingTimeConstant=0;
+  src.connect(mic.hp).connect(mic.analyser);
+  mic.buf=new Float32Array(mic.analyser.fftSize);
+  mic.running=true;
+  $("btnMic").textContent="關閉麥克風";
+  $("micMsg").hidden=true;
+  await listDevices();
+  loopListen();
+}
+function stopMic(){
+  mic.running=false;
+  if(mic.stream){mic.stream.getTracks().forEach(t=>t.stop());mic.stream=null}
+  $("btnMic").textContent="開啟麥克風";
+  if(listenRaf) cancelAnimationFrame(listenRaf);
+  setDetected(null);
+}
+function autoCorrelate(raw,sr0){
+  // decimate ×3 (bass fundamentals sit well below 500 Hz) so the O(n·lag) search stays cheap
+  const D=3, sr=sr0/D, n0=Math.floor(raw.length/D), buf=new Float32Array(n0);
+  for(let i=0;i<n0;i++){ buf[i]=(raw[i*D]+raw[i*D+1]+raw[i*D+2])/3; }
+  let n=buf.length, rms=0;
+  for(let i=0;i<n;i++) rms+=buf[i]*buf[i];
+  rms=Math.sqrt(rms/n); if(rms<0.01) return -1;
+  // trim silence at edges
+  let r1=0,r2=n-1,th=0.2;
+  for(let i=0;i<n/2;i++) if(Math.abs(buf[i])<th){r1=i;break}
+  for(let i=1;i<n/2;i++) if(Math.abs(buf[n-i])<th){r2=n-i;break}
+  const b=buf.slice(r1,r2); n=b.length;
+  const c=new Float32Array(n);
+  const maxLag=Math.floor(sr/30); // no lower than 30 Hz
+  const lim=Math.min(n,maxLag);
+  for(let lag=0;lag<lim;lag++){let s=0;for(let i=0;i<n-lag;i++) s+=b[i]*b[i+lag];c[lag]=s}
+  let d=0; while(d+1<lim && c[d]>c[d+1]) d++;
+  let maxv=-1,maxp=-1;
+  for(let i=d;i<lim;i++) if(c[i]>maxv){maxv=c[i];maxp=i}
+  if(maxp<=0) return -1;
+  // fundamental-vs-harmonic guard: if a lag at 2x also peaks nearly as high, prefer the longer period (lower note)
+  const p2=maxp*2; if(p2<lim && c[p2]>maxv*0.85){ maxp=p2; maxv=c[p2]; }
+  let T0=maxp;
+  const x1=c[T0-1],x2=c[T0],x3=c[T0+1]||0;
+  const a=(x1+x3-2*x2)/2, bb=(x3-x1)/2; if(a) T0=T0-bb/(2*a);
+  return sr/T0;
+}
+function setDetected(midiFloat,freq){
+  const d=$("detected"), cents=$("cents"), bar=cents.firstElementChild;
+  if(midiFloat==null){ d.firstChild.nodeValue="—"; $("detFreq").textContent=""; bar.style.left="50%"; cents.classList.remove("off"); drawLive(null); return }
+  const m=Math.round(midiFloat), c=Math.round((midiFloat-m)*100);
+  d.firstChild.nodeValue=pretty(nameOf(m))+octave(m);
+  $("detFreq").textContent=freq.toFixed(1)+" Hz "+(c>=0?"+":"")+c+"¢";
+  bar.style.left=(50+c/2*0.9)+"%";
+  cents.classList.toggle("off",Math.abs(c)>25);
+  drawLive(m);
+}
+function loopListen(){
+  if(!mic.running) return;
+  mic.analyser.getFloatTimeDomainData(mic.buf);
+  const f=autoCorrelate(mic.buf,audio.sampleRate);
+  if(f>0 && f<1200){
+    const mf=midiOf(f); setDetected(mf,f);
+    if(q && !q.answered && q.listening){
+      const m=Math.round(mf);
+      const loose=$("optOctaveLoose").checked;
+      const hit=loose? pc(m)===pc(q.midi) : m===q.midi;
+      if(hit){ q.stable=(q.stableNote===m)?q.stable+1:1; q.stableNote=m; if(q.stable>=4) answer(true); }
+      else { q.stable=0; q.stableNote=null; }
+    }
+  } else setDetected(null);
+  listenRaf=requestAnimationFrame(loopListen);
+}
+
+/* ---------- question flow ---------- */
+function setStatus(s,h){$("status").textContent=s; if(h!=null)$("hint").textContent=h}
+function clearTimers(){ if(q&&q.timeoutId) clearTimeout(q.timeoutId); if(gapTimer) clearTimeout(gapTimer); if(timerRaf) cancelAnimationFrame(timerRaf); $("timer").firstElementChild.style.transform="scaleX(1)"; }
+function nextQuestion(){
+  clearTimers();
+  const ps=positions();
+  if(!ps.length){ setStatus("目前設定下沒有可出的音","請在設定裡多勾幾條弦或幾個音名"); return }
+  let pick=ps[Math.floor(Math.random()*ps.length)];
+  if(q && ps.length>1){ let tries=0; while(pc(pick.midi)===pc(q.midi) && tries++<8) pick=ps[Math.floor(Math.random()*ps.length)]; }
+  q={...pick,revealed:false,answered:false,listening:false,stable:0,stableNote:null,t0:0,timeoutId:null};
+  const card=$("noteCard"); card.className="note-card"; card.innerHTML="";
+  $("btnReplay").disabled=false; $("btnReveal").disabled=(mode==="name");
+  $("btnNext").innerHTML='下一題<kbd>Space</kbd>';
+  drawBoard();
+  renderChoices(true);
+  if(mode==="read"){
+    card.textContent=pretty(nameOf(q.midi));
+    if(!$("optOctaveLoose").checked){const s=document.createElement("small");s.textContent=STRING_LABEL[q.string]+"弦";card.appendChild(s)}
+    setStatus("在琴上彈出這個音","麥克風聽到正確的音就算過；按 A 看所有位置");
+    startListening();
+  } else {
+    card.classList.add("hidden-note"); card.textContent="♪";
+    setStatus(mode==="ear"?"聽好，彈出來":"聽好，選音名","示範音播完後開始計時");
+    const dur=playNote(q.midi);
+    if($("optHumMask").checked) flashMask(dur);
+    setTimeout(()=>{ if(q&&!q.answered) startListening(); }, dur*1000*0.75);
+  }
+}
+function flashMask(dur){
+  const card=$("noteCard"); let n=0; const iv=setInterval(()=>{ if(!q||q.answered||q.revealed||n++>6){clearInterval(iv);if(q&&!q.revealed)card.textContent="♪";return} card.textContent=pretty(SHARP[Math.floor(Math.random()*12)]); },dur*1000/8);
+}
+function startListening(){
+  q.listening=true; q.t0=performance.now();
+  const limit=+$("optLimit").value*1000;
+  const bar=$("timer").firstElementChild;
+  const tick=()=>{ if(!q||q.answered) return; const r=1-(performance.now()-q.t0)/limit; bar.style.transform="scaleX("+Math.max(0,r)+")"; timerRaf=requestAnimationFrame(tick); };
+  tick();
+  q.timeoutId=setTimeout(()=>{ if(q&&!q.answered){ answer(false,true); } },limit);
+  if(mode==="ear"||mode==="read") $("manualRow").hidden=!$("optManual").checked;
+}
+function reveal(){
+  if(!q||q.revealed) return; q.revealed=true;
+  const card=$("noteCard"); card.classList.remove("hidden-note"); card.innerHTML=pretty(nameOf(q.midi));
+  const s=document.createElement("small"); s.textContent=STRING_LABEL[q.string]+"弦 "+q.fret+"品"; card.appendChild(s);
+  drawBoard(allPositionsOf(q.midi,$("optOctaveLoose").checked));
+  speak(nameOf(q.midi));
+}
+function answer(ok,timedOut){
+  if(!q||q.answered) return; q.answered=true; q.listening=false;
+  clearTimers();
+  const rt=(performance.now()-q.t0)/1000;
+  record(pc(q.midi),ok,ok?rt:null);
+  const card=$("noteCard"); card.classList.add(ok?"good":"bad");
+  ding(ok);
+  reveal();
+  setStatus(ok?("答對 · "+rt.toFixed(2)+" 秒"):(timedOut?"時間到":"答錯"), ok?"":"看一下位置，記住它。");
+  $("manualRow").hidden=true;
+  if($("optAuto").checked){ gapTimer=setTimeout(nextQuestion,(ok? +$("optGap").value : Math.max(2.5,+$("optGap").value))*1000); }
+}
+
+/* ---------- name choices (聽音辨名) ---------- */
+function renderChoices(reset){
+  const box=$("choices"); box.hidden=(mode!=="name");
+  if(mode!=="name") return;
+  const names=useFlats()?FLAT:SHARP; const sharps=$("optSharps").checked;
+  box.innerHTML="";
+  names.forEach((n,i)=>{ if(!sharps&&!NATURAL.has(i)) return; const b=document.createElement("button"); b.textContent=pretty(n); b.dataset.pc=i; b.onclick=()=>choose(i,b); box.appendChild(b); });
+}
+function choose(i,btn){
+  if(!q||q.answered) return;
+  if(!q.listening){ q.listening=true; q.t0=performance.now(); }
+  const ok=pc(q.midi)===i; btn.classList.add(ok?"good":"bad");
+  if(!ok){ [...$("choices").children].find(b=>+b.dataset.pc===pc(q.midi))?.classList.add("good"); }
+  answer(ok);
+}
+
+/* ---------- fretboard drawing ---------- */
+const FB={x0:48,x1:880,y0:34,y1:154};
+function fretX(f,maxF){ // constant spacing for readability
+  return FB.x0+(FB.x1-FB.x0)*(f/maxF);
+}
+function stringY(s){ // s=0 (E, bottom) .. 3 (G, top)
+  return FB.y0+(FB.y1-FB.y0)*((3-s)/3);
+}
+function drawBoard(marks){
+  const svg=$("fretboard"); const maxF=Math.max(12,+$("fretMax").value);
+  let h='';
+  for(let f=0;f<=maxF;f++){ const x=fretX(f,maxF); h+=`<line class="${f===0?"nut":"fret"}" x1="${x}" y1="${FB.y0-8}" x2="${x}" y2="${FB.y1+8}"/>`; const lx=f===0?FB.x0-2:(fretX(f-1,maxF)+x)/2; h+=`<text x="${lx}" y="${FB.y1+26}" text-anchor="middle">${f}</text>`; }
+  for(const f of [3,5,7,9,12,15,17,19]){ if(f>maxF) continue; const x=(fretX(f-1,maxF)+fretX(f,maxF))/2; const cy=(FB.y0+FB.y1)/2; if(f===12) h+=`<circle class="dot" cx="${x}" cy="${cy-22}" r="5"/><circle class="dot" cx="${x}" cy="${cy+22}" r="5"/>`; else h+=`<circle class="dot" cx="${x}" cy="${cy}" r="5"/>`; }
+  for(let s=0;s<4;s++){ const y=stringY(s); h+=`<line class="string" x1="${FB.x0}" y1="${y}" x2="${FB.x1}" y2="${y}" stroke-width="${4-s*0.6}"/>`; h+=`<text x="${FB.x0-14}" y="${y+4}" text-anchor="end" font-weight="600">${STRING_LABEL[s]}</text>`; }
+  if(marks) for(const m of marks){ const x=m.fret===0?FB.x0-2:(fretX(m.fret-1,maxF)+fretX(m.fret,maxF))/2; const y=stringY(m.string); h+=`<circle class="pos${m.exact?" exact":""}" cx="${x}" cy="${y}" r="11"/><text class="postext${m.exact?" exact":""}" x="${x}" y="${y+4}" text-anchor="middle">${pretty(nameOf(m.midi))}</text>`; }
+  h+='<g id="liveMark"></g>';
+  svg.innerHTML=h;
+}
+function drawLive(m){
+  const g=$("liveMark"); if(!g) return;
+  if(m==null){g.innerHTML="";return}
+  const maxF=Math.max(12,+$("fretMax").value);
+  let h="";
+  for(let s=0;s<4;s++){ const f=m-OPEN[s]; if(f<0||f>maxF) continue; const x=f===0?FB.x0-2:(fretX(f-1,maxF)+fretX(f,maxF))/2; h+=`<circle class="live" cx="${x}" cy="${stringY(s)}" r="14"/>`; }
+  g.innerHTML=h;
+}
+
+/* ---------- stats ---------- */
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem("bassEarStats")||"null"); if(s&&s.notes) return s; }catch(e){} return {notes:{},total:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem("bassEarStats",JSON.stringify(stats)); }catch(e){} }
+function record(p,ok,rt){
+  const n=stats.notes[p]||(stats.notes[p]={n:0,ok:0,t:0,tn:0});
+  n.n++; stats.total++; if(ok){n.ok++;stats.correct++; if(rt!=null){n.t+=rt;n.tn++}}
+  saveStats(); renderStats();
+}
+function renderStats(){
+  $("stTotal").textContent=stats.total;
+  $("stAcc").textContent=stats.total?Math.round(100*stats.correct/stats.total)+"%":"—";
+  let T=0,TN=0; const rows=[];
+  for(const p in stats.notes){ const n=stats.notes[p]; T+=n.t; TN+=n.tn; rows.push({p:+p,...n,avg:n.tn?n.t/n.tn:null,acc:n.n?n.ok/n.n:0}); }
+  $("stAvg").textContent=TN?(T/TN).toFixed(2):"—";
+  rows.sort((a,b)=>(b.avg??99)-(a.avg??99) || a.acc-b.acc);
+  $("stWorst").textContent=rows.length?pretty(nameOf(rows[0].p)):"—";
+  const tb=$("statTable").tBodies[0]; tb.innerHTML="";
+  for(const r of rows){ const tr=document.createElement("tr"); const cls=r.acc<0.6?"low":r.acc<0.85?"mid":"";
+    tr.innerHTML=`<td class="mono"><b>${pretty(nameOf(r.p))}</b></td><td class="num mono">${r.n}</td><td class="num mono">${r.ok}</td><td><div class="bar"><i class="${cls}" style="width:${Math.round(r.acc*100)}%"></i></div></td><td class="num mono">${r.avg!=null?r.avg.toFixed(2):"—"}</td>`; tb.appendChild(tr); }
+}
+
+/* ---------- settings UI ---------- */
+function buildPool(){
+  const box=$("notePool"); box.innerHTML="";
+  const names=useFlats()?FLAT:SHARP;
+  names.forEach((n,i)=>{ const l=document.createElement("label"); l.className="chip on"; l.innerHTML=`<input type="checkbox" value="${i}" checked> ${pretty(n)}`; box.appendChild(l); });
+}
+function setPool(fn){ document.querySelectorAll("#notePool input").forEach(c=>{c.checked=fn(+c.value); c.parentElement.classList.toggle("on",c.checked)}); }
+document.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.matches(".chip input")) t.parentElement.classList.toggle("on",t.checked);
+  if(t.id==="optFlats"){ const keep=pool(); buildPool(); setPool(p=>keep.includes(p)); drawBoard(); renderChoices(); if(q&&q.revealed) reveal(); }
+  if(t.id==="optManual"){ $("manualRow").hidden=!(t.checked && q && q.listening && mode!=="name"); }
+  if(t.id==="fretMax"||t.id==="fretMin") drawBoard();
+  if(t.id==="optVol"&&master) master.gain.value=+t.value;
+  if(t.id==="optSharps") renderChoices();
+  if(t.id==="micDevice"&&mic.running) startMic();
+});
+$("optLimit").addEventListener("input",e=>$("limitVal").textContent=e.target.value);
+$("optGap").addEventListener("input",e=>$("gapVal").textContent=(+e.target.value).toFixed(1));
+$("poolAll").onclick=()=>setPool(()=>true);
+$("poolNone").onclick=()=>setPool(()=>false);
+$("poolEmaj").onclick=()=>setPool(p=>[4,6,8,9,11,1,3].includes(p));
+
+document.querySelectorAll(".modes button").forEach(b=>b.onclick=()=>{
+  mode=b.dataset.mode; document.querySelectorAll(".modes button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  clearTimers(); q=null; $("noteCard").className="note-card hidden-note"; $("noteCard").textContent="♪";
+  $("btnNext").innerHTML='開始<kbd>Space</kbd>'; $("btnReplay").disabled=true; $("btnReveal").disabled=true; $("manualRow").hidden=true;
+  $("meter").hidden=(mode==="name"); renderChoices(); drawBoard();
+  const hints={ear:"聽音彈奏模式：播完音之後開始計時，彈對自動下一題",read:"看音名彈奏模式：顯示音名，麥克風聽到正確的音就過關",name:"聽音辨名模式：播完音之後點選音名，不需要麥克風"};
+  setStatus("按「開始」或空白鍵出第一題",hints[mode]);
+});
+
+$("btnNext").onclick=()=>{ensureAudio();nextQuestion()};
+$("btnReplay").onclick=()=>{ if(q) playNote(q.midi); };
+$("btnReveal").onclick=()=>{ if(q&&!q.answered){ reveal(); setStatus("答案揭曉","記住位置後按空白鍵下一題"); q.listening=false; clearTimers(); record(pc(q.midi),false,null); q.answered=true; $("manualRow").hidden=true; } };
+$("btnManualGood").onclick=()=>answer(true);
+$("btnManualBad").onclick=()=>answer(false);
+$("btnMic").onclick=()=>{ mic.running?stopMic():startMic(); };
+$("btnReset").onclick=()=>{ stats={notes:{},total:0,correct:0}; saveStats(); renderStats(); };
+document.addEventListener("keydown",e=>{
+  if(e.target.matches("input,select,textarea")) return;
+  if(e.code==="Space"){e.preventDefault();$("btnNext").click()}
+  else if(e.key==="r"||e.key==="R"){$("btnReplay").click()}
+  else if(e.key==="a"||e.key==="A"){$("btnReveal").click()}
+});
+document.addEventListener("visibilitychange",()=>{ if(document.hidden) clearTimers(); });
+
+/* ---------- init ---------- */
+buildPool(); drawBoard(); renderStats();
+if(navigator.mediaDevices) listDevices();
+})();
+</script>
+</body>
+</html>
