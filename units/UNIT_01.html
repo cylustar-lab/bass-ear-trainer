@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UNIT 01 錨點：空弦與 12 品</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --paper:#F7F4EC; --ink:#1B1B1B; --muted:#6B675E; --line:#CFC9BA; --box:#FFFFFF;
+  --accent:#B8842A; --accent-ink:#1B1B1B; --tab:#3A3A3A; --band:#1B1B1B; --band-ink:#F7F4EC;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --paper:#16171A; --ink:#ECE8DE; --muted:#9A968C; --line:#34363B; --box:#1F2126; --accent:#D9A441; --accent-ink:#16171A; --tab:#D8D3C6; --band:#ECE8DE; --band-ink:#16171A; }
+}
+:root[data-theme="dark"]{ --paper:#16171A; --ink:#ECE8DE; --muted:#9A968C; --line:#34363B; --box:#1F2126; --accent:#D9A441; --accent-ink:#16171A; --tab:#D8D3C6; --band:#ECE8DE; --band-ink:#16171A; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;font-size:15px;line-height:1.7;padding-block:24px 56px;padding-inline:16px}
+.page{max-width:860px;margin:0 auto;display:grid;gap:18px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+
+/* header */
+.head{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;border-bottom:3px solid var(--ink);padding-bottom:14px}
+.week{background:var(--band);color:var(--band-ink);padding:6px 14px;font-weight:900;font-size:18px;letter-spacing:.04em;border-radius:4px;white-space:nowrap}
+.week b{font-size:30px;line-height:1;margin:0 4px}
+.title h1{margin:0;font-size:clamp(22px,4vw,32px);font-weight:900;line-height:1.2;text-wrap:balance}
+.title .tags{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.tag{font-size:11px;letter-spacing:.08em;padding:2px 8px;border:1.5px solid var(--ink);border-radius:3px;font-weight:700}
+.tag.hot{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tool{font-size:12px;color:var(--muted);text-align:right;line-height:1.5}
+.tool a{color:var(--ink)}
+@media (max-width:600px){.head{grid-template-columns:auto 1fr}.tool{grid-column:1/-1;text-align:left}}
+
+/* intro */
+.intro{display:grid;grid-template-columns:1fr 300px;gap:18px;align-items:start}
+@media (max-width:720px){.intro{grid-template-columns:1fr}}
+.intro p{margin:0 0 10px}
+.anchorboard{background:var(--box);border:1.5px solid var(--ink);border-radius:6px;padding:10px}
+.anchorboard .cap{font-size:12px;color:var(--muted);margin-top:6px}
+svg.fb{width:100%;height:auto;display:block}
+.fb text{font-family:"IBM Plex Mono",monospace;font-size:11px;fill:var(--muted)}
+.fb .str{stroke:var(--tab);stroke-linecap:round}
+.fb .fr{stroke:var(--line);stroke-width:2}
+.fb .nut{stroke:var(--ink);stroke-width:5}
+.fb .pos{fill:var(--accent)}
+.fb .postext{fill:var(--accent-ink);font-weight:700;font-size:11px}
+
+/* day cards */
+.day{display:grid;grid-template-columns:72px 1fr 250px;gap:14px;background:var(--box);border:1.5px solid var(--ink);border-radius:6px;padding:12px 14px;align-items:start}
+@media (max-width:720px){.day{grid-template-columns:72px 1fr}.day .why{grid-column:1/-1}}
+.day.daily{border-width:2.5px}
+.dlabel{display:grid;gap:6px;justify-items:center}
+.dlabel .d{background:var(--band);color:var(--band-ink);font-weight:900;font-size:20px;width:64px;height:48px;display:grid;place-items:center;border-radius:4px;letter-spacing:.05em}
+.dlabel .d.gold{background:var(--accent);color:var(--accent-ink);font-size:14px}
+.check{border:1.5px solid var(--ink);border-radius:3px;width:64px;padding:3px 0;text-align:center;font-size:10px;line-height:1.3;cursor:pointer;user-select:none}
+.check b{display:block;font-family:"IBM Plex Mono",monospace;font-size:12px}
+.check.on{background:var(--ink);color:var(--paper)}
+.ex{display:grid;gap:6px;min-width:0}
+.ex h3{margin:0;font-size:17px;font-weight:900;line-height:1.3}
+.meta{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.meta span{border:1px solid var(--line);border-radius:3px;padding:1px 7px}
+.meta .tempo{font-family:"IBM Plex Mono",monospace}
+.tabwrap{overflow-x:auto}
+svg.tab{display:block;height:auto;min-width:420px;width:100%}
+.tab line{stroke:var(--tab)}
+.tab .bar{stroke:var(--ink);stroke-width:1.5}
+.tab text{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;fill:var(--ink)}
+.tab .lbl{font-size:10px;fill:var(--muted);font-weight:500}
+.tab .fing{font-size:10px;fill:var(--muted);font-weight:500}
+.tab .nbg{fill:var(--box)}
+.why{font-size:13.5px;line-height:1.65;border-left:3px solid var(--accent);padding-left:12px;color:var(--ink)}
+.why p{margin:0 0 6px}
+
+/* sunday */
+.sunday{background:var(--box);border:2.5px solid var(--ink);border-radius:6px;padding:16px 18px;display:grid;gap:12px}
+.sunday .band{background:var(--band);color:var(--band-ink);display:inline-block;padding:4px 12px;font-weight:900;border-radius:3px;font-size:15px}
+.sunday h3{margin:0;font-size:19px;font-weight:900}
+.sunday p{margin:0 0 8px;font-size:14.5px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:640px){.two{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+th{background:var(--paper);font-weight:700;font-size:12px}
+td.fill{min-width:70px;color:var(--muted)}
+.selfcheck{display:grid;gap:6px}
+.selfcheck label{display:flex;gap:8px;align-items:flex-start;font-size:14px;cursor:pointer}
+.selfcheck input{accent-color:var(--accent);margin-top:4px;width:16px;height:16px;flex:none}
+.foot{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+@media print{body{padding:0;background:#fff;color:#000}.intro{grid-template-columns:1fr 260px}.day{grid-template-columns:72px 1fr 230px}.day,.sunday,.anchorboard{break-inside:avoid;border-color:#000}.check{cursor:default}}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="head">
+    <div class="week">第<b>1</b>週</div>
+    <div class="title">
+      <h1>錨點：空弦與 12 品</h1>
+      <div class="tags"><span class="tag hot">指板記憶</span><span class="tag">聽音</span><span class="tag">每天 15 分鐘</span></div>
+    </div>
+    <div class="tool">練習工具 → <a href="https://cylustar-lab.github.io/bass-ear-trainer/">Bass 聽音指板練習</a><br>課程面板點 UNIT 01</div>
+  </header>
+
+  <section class="intro">
+    <div>
+      <p>本週不彈任何一首歌。要做的只有一件事：把四條空弦 E、A、D、G 和它們在 12 品的八度，一共八個位置，練到「看到就知道、聽到就知道」。這八個點是整張指板的座標原點——之後每一個音，都是從這裡往上或往下數幾格得來的。多數教材把空弦當成「太簡單、不用練」，直接跳到 0–5 品的音名表；那是把最常被使用的參考點當作已知，然後花大量時間教你低頻率使用的細節。本週把順序倒回來。</p>
+      <p>每天的量很少，大約 15 分鐘，但要求很嚴：不只要彈對，還要邊彈邊唱音名（用英文唱 E、A、D、G），而且不能想。「會而要想」，在 jam 的時候等於不會。速度全部 ♩=80，不趕。</p>
+    </div>
+    <div class="anchorboard">
+      <svg class="fb" id="anchorboard" viewBox="0 0 300 130" role="img" aria-label="本週的八個錨點位置"></svg>
+      <div class="cap">本週的八個位置：四條空弦（0 品）與 12 品。12 品的音名和空弦相同，高一個八度。弦序由上而下 G D A E，與 tab 譜一致。</div>
+    </div>
+  </section>
+
+  <!-- 每日必彈 -->
+  <div class="day daily">
+    <div class="dlabel"><div class="d gold">每日<br>必彈</div><div class="check" data-day="w1-daily">check!<b>every day</b></div></div>
+    <div class="ex">
+      <h3>四條空弦，上行下行，唱音名</h3>
+      <div class="meta"><span class="tempo">♩ = 80</span><span>右手 食中交替</span><span>約 2 分鐘</span></div>
+      <div class="tabwrap"><svg class="tab" data-tab='{"notes":[[0,0],[1,0],[2,0],[3,0],[3,0],[2,0],[1,0],[0,0]],"names":["E","A","D","G","G","D","A","E"],"bars":4}'></svg></div>
+    </div>
+    <div class="why"><p>每一天開始前先彈這一段，四個音上去、四個音下來。重點不在手，在嘴：撥弦的同時把音名唱出來。第一天你會發現唱名比彈慢半拍——那半拍就是這週要消掉的東西。</p><p>撥完空弦，左手全部放開；聽每一條弦的音色差，E 弦鬆、G 弦緊。這個差別之後會變成你「聽到就知道是哪條弦」的線索。</p></div>
+  </div>
+
+  <!-- 周一 -->
+  <div class="day">
+    <div class="dlabel"><div class="d">週一</div><div class="check" data-day="w1-1">check!<b>1 / 98</b></div></div>
+    <div class="ex">
+      <h3>空弦打亂順序：不靠慣性，靠認得</h3>
+      <div class="meta"><span class="tempo">♩ = 80</span><span>每個音兩拍</span><span>5 分鐘</span></div>
+      <div class="tabwrap"><svg class="tab" data-tab='{"notes":[[0,0],[2,0],[1,0],[3,0],[2,0],[0,0],[3,0],[1,0]],"names":["E","D","A","G","D","E","G","A"],"bars":4}'></svg></div>
+    </div>
+    <div class="why"><p>E-A-D-G 順著彈，任何人一天就會；那是背順序，不是認弦。把順序打亂之後還能不遲疑地唱出音名，才算真的認得。</p><p>譜上這一組彈熟後，自己隨機換：閉上眼睛，右手隨便撥一條弦，睜眼前先唱出音名再看。</p></div>
+  </div>
+
+  <!-- 周二 -->
+  <div class="day">
+    <div class="dlabel"><div class="d">週二</div><div class="check" data-day="w1-2">check!<b>2 / 98</b></div></div>
+    <div class="ex">
+      <h3>12 品：同一個名字，高一個八度</h3>
+      <div class="meta"><span class="tempo">♩ = 80</span><span>左手 食指或無名指按 12 品</span><span>5 分鐘</span></div>
+      <div class="tabwrap"><svg class="tab" data-tab='{"notes":[[0,12],[1,12],[2,12],[3,12],[3,12],[2,12],[1,12],[0,12]],"names":["E","A","D","G","G","D","A","E"],"bars":4}'></svg></div>
+    </div>
+    <div class="why"><p>12 品是指板上唯一一個「名字和空弦完全一樣」的位置——雙點記號就是在提醒你這件事。按實了彈，唱的音名和空弦相同：E、A、D、G。</p><p>順便試一下把手指輕靠在 12 品正上方、不按實，撥弦——那是泛音，也是同一個音名。本週不練泛音，只要知道它在那裡。</p></div>
+  </div>
+
+  <!-- 周三 -->
+  <div class="day">
+    <div class="dlabel"><div class="d">週三</div><div class="check" data-day="w1-3">check!<b>3 / 98</b></div></div>
+    <div class="ex">
+      <h3>八度跳：空弦 → 12 品 → 空弦</h3>
+      <div class="meta"><span class="tempo">♩ = 80</span><span>右手 食中交替、不換指序</span><span>5 分鐘</span></div>
+      <div class="tabwrap"><svg class="tab" data-tab='{"notes":[[0,0],[0,12],[1,0],[1,12],[2,0],[2,12],[3,0],[3,12]],"names":["E","E","A","A","D","D","G","G"],"bars":4}'></svg></div>
+    </div>
+    <div class="why"><p>兩個音同名、相差一個八度，這是耳朵最容易辨認的音程。彈的時候聽：第二個音是「同一個音變高」，不是「另一個音」。這個感覺是第 9 週「同名音跨弦」的基礎。</p><p>左手從 0 跳到 12 品是本週唯一的移動，慢慢來，手臂帶手，不要用手指去搆。</p></div>
+  </div>
+
+  <!-- 周四 -->
+  <div class="day">
+    <div class="dlabel"><div class="d">週四</div><div class="check" data-day="w1-4">check!<b>4 / 98</b></div></div>
+    <div class="ex">
+      <h3>閉眼辨弦：只用耳朵</h3>
+      <div class="meta"><span>工具：聽音辨名 模式</span><span>設定：課程 UNIT 01</span><span>20 題</span></div>
+      <div class="tabwrap"><svg class="tab" data-tab='{"notes":[[3,0],[0,0],[1,12],[2,0],[3,12],[1,0],[0,12],[2,12]],"names":["?","?","?","?","?","?","?","?"],"bars":4,"hidefret":true}'></svg></div>
+    </div>
+    <div class="why"><p>今天不看指板。開工具，切到「聽音辨名」，點課程 UNIT 01，它只會播這八個音；聽完點音名。做 20 題，記下正確率。</p><p>沒有工具的替代做法：請人在你背後隨機撥空弦，你唱音名。這一天通常是本週第一次「答錯」，那是正常的：眼睛一關，你才知道耳朵有多少是靠眼睛在撐。</p></div>
+  </div>
+
+  <!-- 周五 -->
+  <div class="day">
+    <div class="dlabel"><div class="d">週五</div><div class="check" data-day="w1-5">check!<b>5 / 98</b></div></div>
+    <div class="ex">
+      <h3>看音名彈奏：過第一關</h3>
+      <div class="meta"><span>工具：看音名彈奏 模式</span><span>設定：課程 UNIT 01</span><span>門檻：20 題 ≥ 90%、平均 ≤ 3 秒</span></div>
+      <div class="tabwrap"><svg class="tab" data-tab='{"notes":[[1,0],[3,12],[0,0],[2,12],[3,0],[1,12],[2,0],[0,12]],"names":["A","G","E","D","G","A","D","E"],"bars":4}'></svg></div>
+    </div>
+    <div class="why"><p>工具顯示音名，你在琴上彈出來，麥克風判斷。今天的目標不是正確率——這八個音你已經不會錯了——是反應時間。卡片上的平均秒數壓到 3 秒以下，這一關就過。</p><p>過了之後再多跑一輪，看能不能壓到 2 秒。這週的「快」，就是之後每一週的「省」。</p></div>
+  </div>
+
+  <!-- 周六 -->
+  <div class="day">
+    <div class="dlabel"><div class="d">週六</div><div class="check" data-day="w1-6">check!<b>6 / 98</b></div></div>
+    <div class="ex">
+      <h3>聽音彈奏：過第二關</h3>
+      <div class="meta"><span>工具：聽音彈奏 模式</span><span>設定：課程 UNIT 01</span><span>門檻：20 題 ≥ 90%、平均 ≤ 3 秒</span></div>
+      <div class="tabwrap"><svg class="tab" data-tab='{"notes":[[2,0],[0,12],[3,0],[1,0],[2,12],[3,12],[0,0],[1,12]],"names":["♪","♪","♪","♪","♪","♪","♪","♪"],"bars":4,"hidefret":true}'></svg></div>
+    </div>
+    <div class="why"><p>這才是本週真正的考試：工具播一個音、不顯示音名，你彈出來。前五天做的每一件事，都是為了今天不用想。</p><p>過關之後把卡片上的三個數字抄到週日的表格裡。沒過也抄，數字不好看才有資訊。</p></div>
+  </div>
+
+  <!-- 周日 -->
+  <section class="sunday">
+    <div><span class="band">週日</span></div>
+    <h3>為什麼認路靠地標，不靠地址</h3>
+    <p>你在陌生城市找路，用的不是門牌號碼，而是「過了那間 7-11 左轉」。地址是完整的資訊，地標是不完整的資訊，但後者好用得多，因為它省掉了「查找」這一步——地標本身就是答案的一部分。經濟學的講法是搜尋成本：與其每次從頭算，不如先付一筆固定成本把幾個參考點記死，之後每一次查詢都變便宜。</p>
+    <p>指板也是這個邏輯。四條空弦與 12 品，是指板上的 7-11。E 弦 3 品是什麼？如果腦子要從「E 弦是 E、往上一格 F、再一格 F♯、再一格 G」這樣數，那是在用地址；如果直接知道「空弦 E 往上三格」，那是在用地標。兩者答案一樣，成本差三倍；而在節奏裡，三倍的時間就是一拍。本週練的八個點，就是那幾間 7-11。</p>
+    <div class="two">
+      <div>
+        <table>
+          <thead><tr><th>本週數字</th><th>正確率</th><th>平均秒數</th><th>最慢的音</th></tr></thead>
+          <tbody>
+            <tr><td>週四 聽音辨名</td><td class="fill">　</td><td class="fill">—</td><td class="fill">　</td></tr>
+            <tr><td>週五 看音名彈奏</td><td class="fill">　</td><td class="fill">　</td><td class="fill">　</td></tr>
+            <tr><td>週六 聽音彈奏</td><td class="fill">　</td><td class="fill">　</td><td class="fill">　</td></tr>
+          </tbody>
+        </table>
+        <p class="foot" style="border:0;padding-top:6px">數字直接從工具的 UNIT 01 卡片與統計表抄。</p>
+      </div>
+      <div class="selfcheck">
+        <label><input type="checkbox" data-day="w1-s1"> 四條空弦打亂順序撥，不遲疑就能唱出音名</label>
+        <label><input type="checkbox" data-day="w1-s2"> 閉眼聽一條空弦，能說出是哪一條（至少 8 成）</label>
+        <label><input type="checkbox" data-day="w1-s3"> 12 品的四個音，唱名與空弦一致、不用想</label>
+        <label><input type="checkbox" data-day="w1-s4"> 工具 UNIT 01 兩關都亮綠勾</label>
+        <label><input type="checkbox" data-day="w1-s5"> 每日必彈連續七天沒有漏</label>
+      </div>
+    </div>
+    <p><b>下週預告 · UNIT 02 E 弦自然音。</b>單一條弦、只有自然音，八個位置：E F G A B C D E。從本週的兩個錨點（E 弦 0 品與 12 品）之間，把中間六個點填進去。</p>
+    <div class="foot">一季練完指板 · 14 週 · 每週一單元。check 格點一下會打勾，記錄存在這個瀏覽器；列印的話直接用筆。弦序：一弦 G（最細）、二弦 D、三弦 A、四弦 E（最粗）。</div>
+  </section>
+</div>
+
+<script>
+(function(){
+  /* anchor fretboard */
+  (function(){
+    const svg=document.getElementById('anchorboard'); const x0=28,x1=290,y0=18,y1=98,maxF=12; const L=["G","D","A","E"];
+    const fx=f=>x0+(x1-x0)*f/maxF; let h='';
+    for(let f=0;f<=maxF;f++){const x=fx(f);h+=`<line class="${f?'fr':'nut'}" x1="${x}" y1="${y0-6}" x2="${x}" y2="${y1+6}"/>`; if(f===0||f===3||f===5||f===7||f===9||f===12) h+=`<text x="${f?(fx(f-1)+x)/2:x}" y="${y1+22}" text-anchor="middle">${f}</text>`;}
+    for(let s=0;s<4;s++){const y=y0+(y1-y0)*s/3;h+=`<line class="str" x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke-width="${2.2+s*0.6}"/>`;h+=`<text x="${x0-10}" y="${y+4}" text-anchor="end">${L[s]}</text>`;
+      for(const f of [0,12]){const x=f?(fx(11)+fx(12))/2:x0-2;h+=`<circle class="pos" cx="${x}" cy="${y}" r="9"/><text class="postext" x="${x}" y="${y+4}" text-anchor="middle">${L[s]}</text>`;}}
+    svg.innerHTML=h;
+  })();
+  /* tab renderer: notes = [[string(0=E..3=G), fret], ...] */
+  document.querySelectorAll('svg.tab').forEach(svg=>{
+    const d=JSON.parse(svg.dataset.tab); const n=d.notes.length; const perBar=Math.ceil(n/(d.bars||1));
+    const left=34,gap=48,top=14,sp=16,right=16; const W=left+n*gap+right,H=top+sp*3+30;
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    const L=["G","D","A","E"]; let h='';
+    for(let i=0;i<4;i++){const y=top+sp*i;h+=`<line x1="${left-6}" y1="${y}" x2="${W-right}" y2="${y}" stroke-width="1"/><text class="lbl" x="${left-10}" y="${y+3.5}" text-anchor="end">${L[i]}</text>`;}
+    h+=`<line class="bar" x1="${left-6}" y1="${top}" x2="${left-6}" y2="${top+sp*3}"/>`;
+    d.notes.forEach((nt,i)=>{const [s,f]=nt; const x=left+gap*i+gap/2; const y=top+sp*(3-s);
+      const txt=d.hidefret?'?':String(f); h+=`<rect class="nbg" x="${x-9}" y="${y-7}" width="18" height="14"/><text x="${x}" y="${y+4.5}" text-anchor="middle">${txt}</text>`;
+      if(d.names&&d.names[i]) h+=`<text class="fing" x="${x}" y="${top+sp*3+18}" text-anchor="middle">${d.names[i]}</text>`;
+      if((i+1)%perBar===0){const bx=left+gap*(i+1);h+=`<line class="bar" x1="${bx}" y1="${top}" x2="${bx}" y2="${top+sp*3}"/>`;}
+    });
+    svg.innerHTML=h;
+  });
+  /* check boxes with localStorage */
+  const KEY='bassUnitChecks'; let st={}; try{st=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
+  const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+  document.querySelectorAll('.check').forEach(c=>{const k=c.dataset.day; if(st[k]) c.classList.add('on'); c.onclick=()=>{st[k]=!st[k]; c.classList.toggle('on',!!st[k]); save();};});
+  document.querySelectorAll('.selfcheck input').forEach(c=>{const k=c.dataset.day; c.checked=!!st[k]; c.onchange=()=>{st[k]=c.checked; save();};});
+})();
+</script>
+</body>
+</html>
