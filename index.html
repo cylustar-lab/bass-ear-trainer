@@ -115,6 +115,22 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .switch{display:flex;align-items:center;gap:8px;font-size:14px}
 .switch input{accent-color:var(--accent);width:18px;height:18px;margin:0}
 
+/* course */
+.course-body{padding:4px 20px 20px;display:grid;gap:12px}
+.units{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.unit{text-align:left;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;font:inherit;color:var(--text);display:grid;gap:4px}
+.unit:hover{border-color:var(--muted)}
+.unit.active{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent)}
+.unit .u-num{font:600 11px "IBM Plex Mono",monospace;color:var(--muted);letter-spacing:.06em}
+.unit .u-name{font-weight:600;font-size:14px}
+.unit .u-desc{font-size:12px;color:var(--muted);line-height:1.4}
+.unit .u-prog{display:flex;gap:6px;margin-top:2px;flex-wrap:wrap}
+.pill{font:500 11px "IBM Plex Mono",monospace;padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.pill.pass{background:var(--good);border-color:var(--good);color:#fff}
+.pill.run{border-color:var(--accent);color:var(--text)}
+.unit.done{border-color:var(--good)}
+.course-tag{font:500 12px "IBM Plex Mono",monospace;color:var(--accent)}
+
 /* stats */
 .stats{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px;display:grid;gap:12px}
 .stats-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
@@ -184,6 +200,15 @@ td.num,th.num{text-align:right}
       <svg class="fb" id="fretboard" viewBox="0 0 900 190" role="img" aria-label="指板"></svg>
     </div>
   </section>
+
+  <details class="settings course" id="course" open>
+    <summary><span>課程 <small id="courseSummary" class="mono"></small></span></summary>
+    <div class="course-body">
+      <p class="foot" style="margin:0 0 4px">點一個單元就自動套好弦、品格、升降音與八度規則。每個單元要過兩關：先「看音名彈奏」，再「聽音彈奏」。過關門檻：最近 20 題正確率 ≥ 90%、平均反應 ≤ 3 秒。過關後也值得回頭複習——反應時間會退步是正常的。</p>
+      <div class="units" id="units"></div>
+      <div class="row"><button class="btn" id="btnCourseExit">離開課程，自由練習</button></div>
+    </div>
+  </details>
 
   <details class="settings" id="settings">
     <summary>設定</summary>
@@ -295,6 +320,7 @@ function positions(){
     const m=OPEN[s]+f, p=pc(m);
     if(!allowed.has(p)) continue;
     if(!sharps && !NATURAL.has(p)) continue;
+    if(activeUnit&&activeUnit.frets&&!activeUnit.frets.includes(f)) continue;
     out.push({string:s,fret:f,midi:m});
   }
   return out;
@@ -564,7 +590,7 @@ function saveStats(){ try{ localStorage.setItem("bassEarStats",JSON.stringify(st
 function record(p,ok,rt){
   const n=stats.notes[p]||(stats.notes[p]={n:0,ok:0,t:0,tn:0});
   n.n++; stats.total++; if(ok){n.ok++;stats.correct++; if(rt!=null){n.t+=rt;n.tn++}}
-  saveStats(); renderStats();
+  saveStats(); renderStats(); courseRecord(ok,rt);
 }
 function renderStats(){
   $("stTotal").textContent=stats.total;
@@ -578,6 +604,81 @@ function renderStats(){
   for(const r of rows){ const tr=document.createElement("tr"); const cls=r.acc<0.6?"low":r.acc<0.85?"mid":"";
     tr.innerHTML=`<td class="mono"><b>${pretty(nameOf(r.p))}</b></td><td class="num mono">${r.n}</td><td class="num mono">${r.ok}</td><td><div class="bar"><i class="${cls}" style="width:${Math.round(r.acc*100)}%"></i></div></td><td class="num mono">${r.avg!=null?r.avg.toFixed(2):"—"}</td>`; tb.appendChild(tr); }
 }
+
+/* ---------- course (14 units) ---------- */
+const NAT=[0,2,4,5,7,9,11], ALL12=[0,1,2,3,4,5,6,7,8,9,10,11], EMAJ=[4,6,8,9,11,1,3];
+const UNITS=[
+  {id:1, name:"錨點：空弦與 12 品", desc:"E A D G 四條空弦與它們的八度，8 個位置。", strings:[0,1,2,3], frets:[0,12], sharps:false, pool:NAT, loose:true},
+  {id:2, name:"E 弦自然音", desc:"單弦、只有自然音，0–12 品。所有根音的家。", strings:[0], fmin:0,fmax:12, sharps:false, pool:NAT, loose:true},
+  {id:3, name:"A 弦自然音", desc:"第二個根音的家。", strings:[1], fmin:0,fmax:12, sharps:false, pool:NAT, loose:true},
+  {id:4, name:"E + A 弦自然音", desc:"第一個跨弦單元，bass 手八成時間在這兩條弦。", strings:[0,1], fmin:0,fmax:12, sharps:false, pool:NAT, loose:true},
+  {id:5, name:"D 弦自然音", desc:"", strings:[2], fmin:0,fmax:12, sharps:false, pool:NAT, loose:true},
+  {id:6, name:"G 弦自然音", desc:"", strings:[3], fmin:0,fmax:12, sharps:false, pool:NAT, loose:true},
+  {id:7, name:"四弦自然音 · 0–5 品", desc:"第一把位，大多數歌開頭落的位置。", strings:[0,1,2,3], fmin:0,fmax:5, sharps:false, pool:NAT, loose:true},
+  {id:8, name:"四弦自然音 · 5–12 品", desc:"", strings:[0,1,2,3], fmin:5,fmax:12, sharps:false, pool:NAT, loose:true},
+  {id:9, name:"同名音跨弦（八度形狀）", desc:"關掉「任何八度都算對」：同一個音名在不同弦上是不同音高，把 12 個點連成網。", strings:[0,1,2,3], fmin:0,fmax:12, sharps:false, pool:NAT, loose:false},
+  {id:10, name:"升降音 · E + A 弦", desc:"回到兩條低音弦，打開升降音。", strings:[0,1], fmin:0,fmax:12, sharps:true, pool:ALL12, loose:true},
+  {id:11, name:"升降音 · D + G 弦", desc:"", strings:[2,3], fmin:0,fmax:12, sharps:true, pool:ALL12, loose:true},
+  {id:12, name:"全指板 · 全音 · 0–12 品", desc:"畢業考。", strings:[0,1,2,3], fmin:0,fmax:12, sharps:true, pool:ALL12, loose:true},
+  {id:13, name:"曲目：光輝歲月 E 大調", desc:"E F♯ G♯ A B C♯ D♯。前面學的能不能在一首真的歌裡用出來。", strings:[0,1,2,3], fmin:0,fmax:12, sharps:true, pool:EMAJ, loose:true},
+  {id:14, name:"延伸：12–17 品", desc:"內容與 0–5 品相同，只是高一個八度；練鏡像直覺。", strings:[0,1,2,3], fmin:12,fmax:17, sharps:true, pool:ALL12, loose:true},
+];
+const PASS_N=20, PASS_ACC=0.9, PASS_RT=3;
+let activeUnit=null;
+let course=loadCourse();
+function loadCourse(){ try{ const c=JSON.parse(localStorage.getItem("bassEarCourse")||"null"); if(c&&c.units) return c; }catch(e){} return {units:{}}; }
+function saveCourse(){ try{ localStorage.setItem("bassEarCourse",JSON.stringify(course)); }catch(e){} }
+function unitLog(id,stage){ const u=course.units[id]||(course.units[id]={read:[],ear:[]}); return u[stage]; }
+function stageStat(id,stage){
+  const log=(course.units[id]||{})[stage]||[]; const last=log.slice(-PASS_N);
+  const n=last.length, ok=last.filter(x=>x.ok).length; const rts=last.filter(x=>x.ok&&x.rt!=null).map(x=>x.rt);
+  const avg=rts.length?rts.reduce((a,b)=>a+b,0)/rts.length:null;
+  const pass=n>=PASS_N && ok/n>=PASS_ACC && avg!=null && avg<=PASS_RT;
+  return {n,ok,avg,pass};
+}
+function applyUnit(u){
+  document.querySelectorAll("#strings input").forEach(c=>{c.checked=u.strings.includes(+c.value); c.parentElement.classList.toggle("on",c.checked)});
+  if(u.frets){ $("fretMin").value=Math.min(...u.frets); $("fretMax").value=Math.max(...u.frets); }
+  else { $("fretMin").value=u.fmin; $("fretMax").value=u.fmax; }
+  $("optSharps").checked=u.sharps; $("optOctaveLoose").checked=u.loose;
+  setPool(p=>u.pool.includes(p));
+  renderChoices(); drawBoard();
+}
+function selectUnit(id){
+  activeUnit=UNITS.find(u=>u.id===id)||null;
+  if(activeUnit){ applyUnit(activeUnit); const want=stageStat(activeUnit.id,"read").pass?"ear":"read"; if(mode!==want) document.querySelector('[data-mode="'+want+'"]').click(); }
+  clearTimers(); q=null; $("noteCard").className="note-card hidden-note"; $("noteCard").textContent="♪";
+  $("btnNext").innerHTML='開始<kbd>Space</kbd>'; $("btnReplay").disabled=true; $("btnReveal").disabled=true;
+  renderUnits(); updateCourseStatus();
+  if(activeUnit){ const r=stageStat(activeUnit.id,"read"); const hint=r.pass?"這個單元「看音名」已過關，切到「聽音彈奏」再過一關":"先用「看音名彈奏」過關，再切到「聽音彈奏」"; setStatus("單元 "+activeUnit.id+"：按空白鍵開始",hint); }
+  else setStatus("自由練習：按「開始」或空白鍵出第一題","");
+}
+function courseStage(){ return mode==="read"?"read":mode==="ear"?"ear":null; }
+function updateCourseStatus(){
+  const done=UNITS.filter(u=>stageStat(u.id,"read").pass&&stageStat(u.id,"ear").pass).length;
+  $("courseSummary").textContent=activeUnit?("· 單元 "+activeUnit.id+" · 已完成 "+done+"/"+UNITS.length):("· 已完成 "+done+"/"+UNITS.length);
+}
+function renderUnits(){
+  const box=$("units"); box.innerHTML="";
+  for(const u of UNITS){
+    const r=stageStat(u.id,"read"), e=stageStat(u.id,"ear");
+    const b=document.createElement("button"); b.className="unit"+(activeUnit&&activeUnit.id===u.id?" active":"")+(r.pass&&e.pass?" done":"");
+    const pill=(label,s)=>`<span class="pill${s.pass?" pass":s.n?" run":""}">${label} ${s.pass?"✓":(s.n?s.ok+"/"+s.n+(s.avg!=null?" · "+s.avg.toFixed(1)+"s":""):"—")}</span>`;
+    b.innerHTML=`<span class="u-num">UNIT ${String(u.id).padStart(2,"0")}</span><span class="u-name">${u.name}</span>${u.desc?`<span class="u-desc">${u.desc}</span>`:""}<span class="u-prog">${pill("看音名",r)}${pill("聽音",e)}</span>`;
+    b.onclick=()=>selectUnit(activeUnit&&activeUnit.id===u.id?null:u.id);
+    box.appendChild(b);
+  }
+}
+function courseRecord(ok,rt){
+  if(!activeUnit) return; const st=courseStage(); if(!st) return;
+  const log=unitLog(activeUnit.id,st); log.push({ok,rt:ok?rt:null,t:Date.now()}); if(log.length>200) log.splice(0,log.length-200);
+  saveCourse(); renderUnits(); updateCourseStatus();
+  const s=stageStat(activeUnit.id,st);
+  if(s.pass){ setTimeout(()=>{ if(q&&q.answered) $("hint").textContent="單元 "+activeUnit.id+" 的「"+(st==="read"?"看音名":"聽音")+"」過關了（"+s.ok+"/"+s.n+"，平均 "+s.avg.toFixed(1)+" 秒）"; },50); }
+}
+$("btnCourseExit").onclick=()=>selectUnit(null);
+// leaving the unit's settings by hand exits the unit, so the record stays honest
+["strings","fretMin","fretMax","optSharps","optOctaveLoose","notePool"].forEach(id=>$(id).addEventListener("change",()=>{ if(activeUnit){ activeUnit=null; renderUnits(); updateCourseStatus(); } }));
 
 /* ---------- settings UI ---------- */
 function buildPool(){
@@ -628,7 +729,7 @@ document.addEventListener("keydown",e=>{
 document.addEventListener("visibilitychange",()=>{ if(document.hidden) clearTimers(); });
 
 /* ---------- init ---------- */
-buildPool(); drawBoard(); renderStats();
+buildPool(); drawBoard(); renderStats(); renderUnits(); updateCourseStatus();
 if(navigator.mediaDevices) listDevices();
 })();
 </script>
